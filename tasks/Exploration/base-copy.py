@@ -408,38 +408,6 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
             if self.appear(self.I_EXPLORATION_TITLE) or self.appear(self.I_CHECK_EXPLORATION):
                 continue
 
-    def quit_explore_fast(self) -> bool:
-        logger.info('Fast quit explore')
-        timer = Timer(10)
-        timer.start()
-        back_clicked = False
-        exit_confirmed = False
-
-        while 1:
-            self.screenshot()
-
-            if self.appear(self.I_E_EXPLORATION_CLICK):
-                time.sleep(1)
-                return True
-
-            if self.appear_then_click(self.I_E_EXIT_CONFIRM, interval=0.5):
-                exit_confirmed = True
-                continue
-
-            if exit_confirmed:
-                continue
-
-            if not back_clicked:
-                if self.appear_then_click(self.I_BACK_YOLLOW, interval=1):
-                    back_clicked = True
-                    continue
-                if self.appear_then_click(self.I_UI_BACK_YELLOW, interval=1):
-                    back_clicked = True
-                    continue
-
-            if timer.reached():
-                logger.warning('Fast quit timeout')
-                return False
     def fire(self, button) -> bool:
         self.ui_click_until_disappear(button, interval=3)
         self.screenshot()
@@ -473,3 +441,4 @@ if __name__ == "__main__":
         time.sleep(0.2)
     from PIL import Image
     # Image.fromarray(t.device.image.astype(np.uint8)).show()
+

@@ -53,7 +53,6 @@ class SoloExploration(BaseExploration):
             elif scene == Scene.ENTRANCE:
                 if self.check_exit():
                     break
-                sleep(1)
                 self.ui_click(self.I_E_EXPLORATION_CLICK, stop=self.I_E_SETTINGS_BUTTON)
                 explore_init = False
                 continue
@@ -75,9 +74,6 @@ class SoloExploration(BaseExploration):
                 if self.appear(self.I_BOSS_BATTLE_BUTTON):
                     if self.fire(self.I_BOSS_BATTLE_BUTTON):
                         logger.info(f'Boss battle, minions cnt {self.minions_cnt}')
-                        self.quit_explore_fast()
-                        search_fail_cnt = 0
-                        explore_init = False
                     continue
                 # 小怪
                 fight_button = self.search_up_fight()
@@ -86,29 +82,12 @@ class SoloExploration(BaseExploration):
                         logger.info(f'Fight, minions cnt {self.minions_cnt}')
                     continue
                 # 向后拉,寻找怪
-                if not self.appear(self.I_TREASURE_BOX_CLICK) and self.appear(self.I_E_EXPLORATION_CLICK):
-                    logger.warning('Fallback: exploration button appears while no fight target found')
-                    if self.appear_then_click(self.I_E_EXPLORATION_CLICK, interval=1):
-                        search_fail_cnt = 0
-                        explore_init = False
-                        continue
-                    self.device.click(880, 640)
-                    search_fail_cnt = 0
-                    explore_init = False
-                    continue
                 if search_fail_cnt >= 4:
                     search_fail_cnt = 0
-                    no_boss = not self.appear(self.I_BOSS_BATTLE_BUTTON)
-                    no_minions = self.search_up_fight() is None
-                    reached_end = (
-                        self._config.exploration_config.exploration_level == ExplorationLevel.EXPLORATION_28
-                        and self.appear(self.I_SWIPE_END)
-                    ) or self._match_end.stable(self.device.image, refresh_after_stable=True)
-                    if no_boss and no_minions and reached_end:
-                        logger.info('No minions or boss left, fast quit exploration')
-                        self.quit_explore_fast()
-                        search_fail_cnt = 0
-                        explore_init = False
+                    if (self._config.exploration_config.exploration_level == ExplorationLevel.EXPLORATION_28\
+                        and self.appear(self.I_SWIPE_END))\
+                            or self._match_end.stable(self.device.image, refresh_after_stable=True):
+                        self.quit_explore()
                         continue
                     if self.swipe(self.S_SWIPE_BACKGROUND_RIGHT, interval=3):
                         continue
