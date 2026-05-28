@@ -389,10 +389,8 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
                 break
   
             # 防止BOSS打完箱子刚落地，脚本就手快点退出了
-            if self.appear_then_click(self.I_BATTLE_REWARD, interval=1.5):
-                logger.info("Found battle reward during exit, picking it up.")
-                boss_timer.reset()
-                continue
+            if self.appear(self.I_BATTLE_REWARD):
+                logger.info("Found battle reward during exit, skip collecting.")
 
             if boss_timer.reached():
                 logger.warning('Exit timeout, force clicking back button')
@@ -412,8 +410,9 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
         logger.info('Fast quit explore')
         timer = Timer(10)
         timer.start()
+        popup_click_timer = Timer(2)
+        popup_click_timer.start()
         back_clicked = False
-        exit_confirmed = False
 
         while 1:
             self.screenshot()
@@ -422,11 +421,13 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
                 time.sleep(1)
                 return True
 
-            if self.appear_then_click(self.I_E_EXIT_CONFIRM, interval=0.5):
-                exit_confirmed = True
-                continue
+            if self.appear(self.I_CHECK_EXPLORATION) and not self.appear(self.I_E_SETTINGS_BUTTON):
+                logger.info('Back to exploration world, reopen expected level')
+                if self.open_expect_level():
+                    return True
+                return False
 
-            if exit_confirmed:
+            if self.appear_then_click(self.I_E_EXIT_CONFIRM, interval=0.5):
                 continue
 
             if not back_clicked:
@@ -436,6 +437,9 @@ class BaseExploration(GameUi, GeneralBattle, GeneralRoom, GeneralInvite, Replace
                 if self.appear_then_click(self.I_UI_BACK_YELLOW, interval=1):
                     back_clicked = True
                     continue
+
+            if popup_click_timer.reached_and_reset():
+                self.device.click(900, 360, control_name='clear_reward_popup')
 
             if timer.reached():
                 logger.warning('Fast quit timeout')

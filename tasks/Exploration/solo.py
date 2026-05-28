@@ -69,8 +69,7 @@ class SoloExploration(BaseExploration):
                     continue
                 # 小纸人
                 if self.appear(self.I_BATTLE_REWARD):
-                    if self.ui_get_reward(self.I_BATTLE_REWARD):
-                        continue
+                    logger.info('Paper doll reward appears, skip collecting')
                 # boss
                 if self.appear(self.I_BOSS_BATTLE_BUTTON):
                     if self.fire(self.I_BOSS_BATTLE_BUTTON):
@@ -209,8 +208,7 @@ class SoloExploration(BaseExploration):
                     continue
                 # 小纸人
                 if self.appear(self.I_BATTLE_REWARD):
-                    if self.ui_get_reward(self.I_BATTLE_REWARD):
-                        continue
+                    logger.info('Paper doll reward appears, skip collecting')
                 # 中途有人跑路
                 if not self.appear(self.I_TEAM_EMOJI):
                     if not friend_leave_timer.started():
@@ -297,8 +295,7 @@ class SoloExploration(BaseExploration):
                     continue
                 # 小纸人
                 if self.appear(self.I_BATTLE_REWARD):
-                    if self.ui_get_reward(self.I_BATTLE_REWARD):
-                        continue
+                    logger.info('Paper doll reward appears, skip collecting')
                 #
                 if not self.appear(self.I_TEAM_EMOJI):
                     logger.warning('Team emoji not appear')

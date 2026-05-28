@@ -49,7 +49,7 @@ class GameUiAssets:
 	# description 
 	I_MAIN_GOTO_EXPLORATION = RuleImage(roi_front=(493,116,45,75), roi_back=(243,100,933,211), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_main_goto_exploration.png")
 	# description 
-	I_CHECK_EXPLORATION = RuleImage(roi_front=(681,12,27,36), roi_back=(661,0,70,61), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_exploration.png")
+	I_CHECK_EXPLORATION = RuleImage(roi_front=(1149,116,25,25), roi_back=(1129,96,65,65), threshold=0.8, method="Template matching", file="./tasks/GameUi/page/page_check_exploration.png")
 	# 探索前往觉醒 
 	I_EXPLORATION_GOTO_AWAKE_ZONE = RuleImage(roi_front=(65,632,50,41), roi_back=(33,619,1125,98), threshold=0.65, method="Template matching", file="./tasks/GameUi/page/page_exploration_goto_awake_zone.png")
 	# 探索前往御魂 
@@ -278,5 +278,4 @@ class GameUiAssets:
 	O_HOME_EXPLORE = RuleOcr(roi=(310,105,858,194), area=(0,0,100,100), mode="Full", method="Default", keyword="探索", name="home_explore")
 	# Ocr-description 
 	O_NEW = RuleOcr(roi=(0,0,100,100), area=(0,0,100,100), mode="Single", method="Default", keyword="", name="new")
-
 

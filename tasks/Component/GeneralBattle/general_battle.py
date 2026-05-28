@@ -202,12 +202,17 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
 
         # 再次确认战斗结果
         logger.info("Reconfirm the results of the battle")
+        popup_click_timer = Timer(2).start()
         while 1:
             self.screenshot()
             if win:
                 # 点击赢了
                 action_click = random.choice([self.C_WIN_1, self.C_WIN_2, self.C_WIN_3])
                 if self.appear_then_click(self.I_WIN, action=action_click, interval=0.5):
+                    continue
+                if popup_click_timer.reached_and_reset():
+                    logger.info("Clear possible event reward popup")
+                    self.device.click(900, 360, control_name='clear_event_reward_popup')
                     continue
                 if not self.appear(self.I_WIN):
                     break
@@ -218,10 +223,19 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
                 if not self.appear(self.I_FALSE, threshold=0.6):
                     return False
         # 最后保证能点击 获得奖励
-        if not self.wait_until_appear(self.I_REWARD):
-            # 有些的战斗没有下面的奖励，所以直接返回
-            logger.info("There is no reward, Exit battle")
-            return win
+        reward_wait_timer = Timer(12).start()
+        popup_click_timer = Timer(2).start()
+        while 1:
+            self.screenshot()
+            if self.appear(self.I_REWARD) or self.appear(self.I_REWARD_GOLD):
+                break
+            if popup_click_timer.reached_and_reset():
+                logger.info("Clear possible event reward popup")
+                self.device.click(900, 360, control_name='clear_event_reward_popup')
+            if reward_wait_timer.reached():
+                # 有些的战斗没有下面的奖励，所以直接返回
+                logger.info("There is no reward, Exit battle")
+                return win
         logger.info("Get reward")
         while 1:
             self.screenshot()
