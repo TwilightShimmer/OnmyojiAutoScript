@@ -73,6 +73,10 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
                     continue
                 continue
             # 未知界面, 既不是准备界面也不是战斗界面
+            if self.appear(self.I_EXIT) and self.appear(self.I_FRIENDS):
+                logger.info('Prepare page fallback click')
+                self.device.click(1180, 610, control_name='prepare_fallback')
+                continue
             logger.info('Wait for preparation page')
             sleep(random.uniform(0.4, 0.8))
         return False
@@ -98,6 +102,13 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
         # 点击返回
         while 1:
             self.screenshot()
+            if exit_four and (
+                    self.appear(self.I_WIN, threshold=0.8) or
+                    self.appear(self.I_FALSE, threshold=0.8) or
+                    self.appear(self.I_REWARD, threshold=0.6) or
+                    self.appear(self.I_REWARD_GOLD, threshold=0.8)):
+                logger.info("Exit four battle already finished, handle result")
+                return self.battle_wait(False)
             if self.appear_then_click(self.I_EXIT, interval=1.5):
                 continue
             if self.appear(self.I_EXIT_ENSURE):
@@ -227,6 +238,8 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
         popup_click_timer = Timer(2).start()
         while 1:
             self.screenshot()
+            if self.appear_then_click(self.I_UI_BACK_BLUE, interval=1):
+                continue
             if self.appear(self.I_REWARD) or self.appear(self.I_REWARD_GOLD):
                 break
             if popup_click_timer.reached_and_reset():
@@ -239,8 +252,10 @@ class GeneralBattle(GeneralBuff, GeneralBattleAssets):
         logger.info("Get reward")
         while 1:
             self.screenshot()
+            if self.appear_then_click(self.I_UI_BACK_BLUE, interval=1):
+                continue
             # 如果出现领奖励
-            action_click = random.choice([self.C_REWARD_1, self.C_REWARD_2, self.C_REWARD_3])
+            action_click = self.C_REWARD_1
             if (self.appear_then_click(self.I_REWARD, action=action_click, interval=1.5) or
                 self.appear_then_click(self.I_REWARD_GOLD, action=action_click, interval=1.5)#  or
                 # self.appear_then_click(self.I_REWARD_STATISTICS, action=action_click, interval=1.5) or

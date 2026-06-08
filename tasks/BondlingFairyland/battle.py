@@ -6,6 +6,7 @@ from datetime import timedelta, datetime
 import random
 
 from module.server.i18n import I18n
+from module.base.timer import Timer
 from tasks.BondlingFairyland.config import BondlingMode
 from tasks.Component.GeneralBattle.general_battle import GeneralBattle
 from tasks.BondlingFairyland.assets import BondlingFairylandAssets
@@ -68,6 +69,19 @@ class BondlingBattle(GeneralBattle, BondlingFairylandAssets):
         bondling_mode = self.config.bondling_fairyland.bondling_config.bondling_mode
         cap_again = bondling_mode in [BondlingMode.MODE3, BondlingMode.MODE4]
         cap_cnt, max_cap = 0, 10
+        abandon_fallback_timer = Timer(5).start()
+
+        def click_abandon_with_wide_roi() -> bool:
+            origin_roi_back = self.I_BATTLE_FAIL_ABANDON.roi_back
+            self.I_BATTLE_FAIL_ABANDON.roi_back = (340, 560, 300, 110)
+            try:
+                if self.appear_then_click(self.I_BATTLE_FAIL_ABANDON, interval=1):
+                    logger.info("Click battle fail abandon with wide roi")
+                    return True
+            finally:
+                self.I_BATTLE_FAIL_ABANDON.roi_back = origin_roi_back
+            return False
+
         while 1:
             # 捕获次数超过最大次数限制, 则不再进行捕获
             if cap_cnt >= max_cap:
@@ -82,6 +96,11 @@ class BondlingBattle(GeneralBattle, BondlingFairylandAssets):
             # 非连续结契且单次抓捕失败
             if not cap_again and self.appear_then_click(self.I_BATTLE_FAIL_ABANDON, interval=1):
                 win = False
+                continue
+            if not cap_again and abandon_fallback_timer.reached_and_reset():
+                if click_abandon_with_wide_roi():
+                    win = False
+                    continue
             # 连续结契则继续结契
             if cap_again and self.appear_then_click(self.I_CAP_AGAIN, interval=1):
                 self.device.click_record_clear()  # 需要10次结契因此清空点击记录
@@ -93,6 +112,11 @@ class BondlingBattle(GeneralBattle, BondlingFairylandAssets):
             if self.appear_then_click(self.I_WIN, threshold=0.6):
                 continue
             if self.appear_then_click(self.I_BATTLE_SUCCESS, threshold=0.6, interval=1):
+                continue
+            if not cap_again and self.appear(self.I_BATTLE_FAIL, threshold=0.6):
+                logger.info("Battle fail detected, click abandon fallback")
+                self.device.click(500, 625, control_name='bondling_abandon_fallback')
+                win = False
                 continue
             if self.appear_then_click(self.I_BATTLE_FAIL, threshold=0.6, interval=1):
                 continue

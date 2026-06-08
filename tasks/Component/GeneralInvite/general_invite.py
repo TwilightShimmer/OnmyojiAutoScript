@@ -310,23 +310,32 @@ class GeneralInvite(BaseTask, GeneralInviteAssets):
         if not name:
             return False
 
+        def click_friend_row(ocr, click_x: int) -> bool:
+            if not self.ocr_appear(ocr, interval=2):
+                return False
+            _, y, _, h = ocr.area
+            self.device.click(click_x, int(y + h / 2), control_name=ocr.name)
+            return True
+
         self.screenshot()
         self.O_FRIEND_NAME_1.keyword = name
         self.O_FRIEND_NAME_2.keyword = name
-        appear_1 = self.ocr_appear_click(self.O_FRIEND_NAME_1, interval=2)
-        appear_2 = self.ocr_appear_click(self.O_FRIEND_NAME_2, interval=2)
+        appear_1 = click_friend_row(self.O_FRIEND_NAME_1, 610)
+        appear_2 = click_friend_row(self.O_FRIEND_NAME_2, 910)
         if not appear_1 and not appear_2:
             logger.info('Current page no friend')
             return False
 
-        while appear_1 or appear_2:
+        select_try = 0
+        while (appear_1 or appear_2) and select_try < 3:
+            select_try += 1
             self.screenshot()
             if self.appear(self.I_SELECTED):
-                break
-            appear_1 = self.ocr_appear_click(self.O_FRIEND_NAME_1, interval=2)
-            appear_2 = self.ocr_appear_click(self.O_FRIEND_NAME_2, interval=2)
+                return True
+            appear_1 = click_friend_row(self.O_FRIEND_NAME_1, 610)
+            appear_2 = click_friend_row(self.O_FRIEND_NAME_2, 910)
 
-        return True
+        return False
 
     def invite_friend(self, name: str = None, find_mode: FindMode = FindMode.AUTO_FIND) -> bool:
         """
@@ -648,5 +657,3 @@ if __name__ == '__main__':
     # t.run_invite(c.orochi.invite_config, is_first=True)
     t.screenshot()
     print(t.appear(t.I_FIRE, threshold=0.8))
-
-

@@ -55,6 +55,7 @@ class Script:
         # Failure count of tasks
         # Key: str, task name, value: int, failure count
         self.failure_record = {}
+        self.vision_recovery_record = {}
         # 运行loop的线程
         self.loop_thread: Thread = None
 
@@ -474,6 +475,7 @@ class Script:
             task_module = load_module(module_name, module_path)
             task_module.ScriptTask(config=self.config, device=self.device).run()
         except TaskEnd:
+            self.vision_recovery_record.pop(command, None)
             return True
         except GameNotRunningError as e:
             logger.warning(e)
@@ -482,6 +484,9 @@ class Script:
             return True
         except (GameStuckError, GameTooManyClickError) as e:
             logger.error(e)
+            if self.try_vision_recover(e=e, command=command):
+                logger.warning(f'Vision recover handled {type(e).__name__}, retry task `{command}`')
+                return self.run(command)
             self.save_error_log()
             self.exception_handler(e=e, command=command)
             logger.warning(f'Game stuck, {self.device.package} will be restarted in 10 seconds')
@@ -527,6 +532,42 @@ class Script:
             self.save_error_log()
             self.config.notifier.push(title=f'{I18n.trans_zh_cn(command)}{command}', content=f"<{self.config_name}> Exception occured")
             exit(1)
+
+    def try_vision_recover(self, e: Exception, command: str) -> bool:
+        """
+        Let a vision model perform one low-risk recovery before the normal error handling restarts the game.
+        The API key is read from OAS_VISION_API_KEY and is never stored in project files.
+        """
+        record_key = command
+        used = self.vision_recovery_record.get(record_key, 0)
+        if used >= 3:
+            logger.warning(f'Vision recover skipped: `{command}` already recovered {used} times')
+            return False
+
+        try:
+            from module.recover.vision_recover import VisionRecover
+            recover = VisionRecover()
+            result = recover.recover(
+                device=self.device,
+                task_name=command,
+                error_type=type(e).__name__,
+                click_history=list(self.device.click_record),
+                detect_record=list(self.device.detect_record),
+            )
+        except Exception as recover_error:
+            logger.warning(f'Vision recover failed before action: {recover_error}')
+            return False
+
+        if not result.handled:
+            return False
+
+        self.vision_recovery_record[record_key] = used + 1
+        logger.info(
+            f'Vision recover success [{self.vision_recovery_record[record_key]}/3]: '
+            f'{result.scene}, {result.action}'
+        )
+        self.device.sleep(1)
+        return True
 
     def loop(self):
         """

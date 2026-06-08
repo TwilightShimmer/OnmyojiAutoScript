@@ -175,6 +175,7 @@ class SoloExploration(BaseExploration):
                     if self.appear_then_click(self.I_EXP_CREATE_TEAM, interval=1):
                         continue
                     if self.appear_then_click(self.I_EXP_CREATE_ENSURE, interval=2):
+                        sleep(1)
                         continue
             #
             elif scene == Scene.TEAM:
